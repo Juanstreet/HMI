@@ -1,0 +1,159 @@
+register_inverter={
+                   "Current input":8,
+                   "High Power output":9,
+                   "Low Power otput":10,
+                   "High Apparent Power":11,
+                   "Low Apparent Power":12,
+                   "Voltage input":17,
+                   "Voltage output":22,
+                   "Frecuency output":23,
+                   "Percentage Load":27,
+                   "Current output":34, 
+                   "Inv Current":35, 
+                   "Charging Current":83
+}
+register_solar_controler={
+                    "Voltage PV":1,
+                    "batery voltage":2,
+                    "Charging Current":3,
+                    "Output Voltage":4,
+                    "Load Current":6,
+                    "Charging Power":7,
+                    "Load Power":8,
+                    "power":526,
+                    "power1":527
+}
+battery_registers={
+    "Current":".1.3.6.1.4.1.51232.70.1.1.0",
+    "Voltage":".1.3.6.1.4.1.51232.70.1.2.0",
+    "SOC":".1.3.6.1.4.1.51232.70.1.3.0",
+    "SOH":".1.3.6.1.4.1.51232.70.1.4.0",
+    "Max capacity":".1.3.6.1.4.1.51232.70.1.6.0",
+    "Nominal capacity":".1.3.6.1.4.1.51232.70.1.7.0",
+    "Voltage cell 1":".1.3.6.1.4.1.51232.70.1.10.0", 
+    "Voltage cell 2":".1.3.6.1.4.1.51232.70.1.11.0",
+    "Voltage cell 3":".1.3.6.1.4.1.51232.70.1.12.0",
+    "Voltage cell 4":".1.3.6.1.4.1.51232.70.1.13.0",
+    "Voltage cell 5":".1.3.6.1.4.1.51232.70.1.14.0",
+    "Voltage cell 6":".1.3.6.1.4.1.51232.70.1.15.0",
+    "Voltage cell 7":".1.3.6.1.4.1.51232.70.1.16.0",
+    "Voltage cell 8":".1.3.6.1.4.1.51232.70.1.17.0",
+    "Voltage cell 9":".1.3.6.1.4.1.51232.70.1.18.0",
+    "Voltage cell 10":".1.3.6.1.4.1.51232.70.1.19.0",
+    "Voltage cell 11":".1.3.6.1.4.1.51232.70.1.20.0",
+    "Voltage cell 12":".1.3.6.1.4.1.51232.70.1.21.0",
+    "Voltage cell 13":".1.3.6.1.4.1.51232.70.1.22.0",
+    "Voltage cell 14":".1.3.6.1.4.1.51232.70.1.23.0",
+}
+CF_registers={
+    "Voltage Bus DC":0,
+    "Load Current":1,
+    "Capacity":2,
+    "Output Current":3, 
+    "Modo":4,
+    "Temperature":16,
+    "StatusG01":2000,
+    "Voltaje Output G01":2001,
+    "Current Output G01":2002,
+    "Voltage AC G01":2004, 
+    "Current AC G01":2005,
+    "StatusG02":2010,
+    "Voltaje Output G02":2011,
+    "Current Output G02":2012,
+    "Voltage AC G02":2014,
+    "Current AC G02":2015,
+    "StatusG188":3870,
+    "Voltaje Output G188":3871,
+    "Current Output G188":3872, 
+    "Voltage AC G188":3874,
+    "Current AC G188":3875
+}
+
+alarma={
+    #Bateria
+    "Single-cell voltage alarm":".1.3.6.1.4.1.51232.70.1.30.0", 
+    "Cell Temperature Alarm":".1.3.6.1.4.1.51232.70.1.31.0",
+    #Solar
+    "Failure Solar":14,
+    #inversor
+    "Fail bit":40
+}
+
+alarm_CF={
+    #Cuadro de Fuerza
+    1: "DC1 AMJ: Auxiliary Fuse Major",
+    6: "DC1 VMF: Voltage Module Fail",
+    8: "DC1 MCM: Major Communication Failure",
+    9: "DC1 EPO: Emergency Power Off",
+    11: "DC1 RFA: Rectifier Fail",
+    12: "DC1 ACF: AC Fail",
+    17: "DC1 VLA: Very Low Voltage",
+    18: "DC1 MFA: Multiple Rectifier Fail",
+    24: "DC1 BDA: Battery On Discharge",
+    25: "DC1 HVA: High Voltage",
+    48: "CP1 CFA: Converter Fail",
+    51: "CP1 DFA: Distribution Fail",
+    57: "CP1 VLA: Converter Very Low Voltage",
+    60: "BR1 BFA: Battery Test Failed",
+    61: "BR1 SCDA: Shorted Cell Detected",
+    62: "BR1 ISDA: Imminent Shutdown",
+    65: "BR1 BTHA: High Battery Temperature",
+    101: "GN1 GNF: Generator Fail",
+    105: "BR1 RBA: Reverse Battery",
+    114: "IVP1 IF: Inverter Fail",
+    124: "IVP1 MIF: Multiple Inverter Fail",
+    132: "DC1 BTHA: Batt Hi Temp",
+    133: "DC1 BTVH: Batt Very Hi Temp",
+    151: "DC1 DIF: PE Internal Circuit Fail",
+    152: "DC1 OPS: PE Over Power Shutdown",
+    153: "DC1 OCS: PE Over Current Shutdown",
+    154: "DC1 SCS: PE Short Circuit Shutdown",
+    156: "DC1 OTS: PE Over Temperature Shutdown",
+    163: "DC1 PEID: PE ID Conflict",
+    190: "CNS CNF5: Failed Battery Shunt Trip 1"
+    }
+
+faults_solar = {
+            1: "Battery overvoltage",
+            2: "PV overvoltage",
+            3: "Charging over current",
+            4: "Discharge over current",
+            5: "Battery temperature too high",
+            6: "Internal temperature too high",
+            7: "PV voltage too low",
+            8: "Low battery voltage",
+            9: "TZ protection trigger"
+}
+
+faults_inverter = {
+        1: "Bus over",
+        2: "Bus under",
+        3: "Bus soft start fail",
+        4: "PV over current",
+        5: "MPPT over current",
+        6: "AC over current",
+        7: "AC back current",
+        8: "PV voltage too low",
+        9: "PV voltage too high",
+        10: "Battery voltage too high",
+        11: "Battery voltage too low",
+        12: "Grid voltage too high",
+        13: "Grid voltage too low",
+        14: "Grid frequency too high",
+        15: "Grid frequency too low",
+        16: "AC output voltage too high",
+        17: "AC output voltage too low",
+        18: "AC output frequency too high",
+        19: "AC output frequency too low",
+        20: "AC output short",
+        21: "AC output over current",
+        22: "AC output overload",
+        23: "OP temp high",
+        24: "Heat sink temp high",
+        25: "External temp high",
+        26: "Low temperature",
+        27: "BMS comm loss",
+        28: "Over-time",
+        29: "Over-discharge",
+    }
+
