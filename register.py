@@ -128,6 +128,8 @@ battery_registers={
     "Voltage cell 12":".1.3.6.1.4.1.51232.70.1.21.0",
     "Voltage cell 13":".1.3.6.1.4.1.51232.70.1.22.0",
     "Voltage cell 14":".1.3.6.1.4.1.51232.70.1.23.0",
+    "Ciclos": ".1.3.6.1.4.1.51232.70.1.8.0",
+    "Temperatura": ".1.3.6.1.4.1.51232.70.1.27.0"
 }
 CF_registers={
     "Voltage Bus DC":0,
