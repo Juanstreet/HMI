@@ -1,11 +1,12 @@
-import sqlite3, time,logging, minimalmodbus, pymodbus,pymodbus.client, struct
+import sqlite3, time,logging, minimalmodbus, pymodbus,pymodbus.client, struct, datetime
 from easysnmp import Session
 from pymodbus.client import ModbusTcpClient
 from register import faults_inverter,faults_solar,alarm_CF,register_inverter,register_solar_controler,battery_registers,CF_registers
 from alarms import *
 
+
 # --- Variables globales ---
-DB_PATH = '/media/juan/HMI/HMI.db'
+DB_PATH = '/home/juan/Downloads/base.db'
 logger = logging.getLogger(__name__)  # Logger para este módulo
 
 #Configuracion de la comunicacion con los equipos RTU
@@ -80,7 +81,7 @@ def inicializar_db():
                 cursor.execute('''
                 CREATE TABLE datos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    fecha_hora DATETIME,
                     current_input_i1 REAL,
                     high_power_output_i1 REAL,
                     low_power_output_i1 INTEGER,
@@ -125,6 +126,8 @@ def inicializar_db():
                     Voltage_cell_12_bat REAL,
                     Voltage_cell_13_bat REAL,
                     Voltage_cell_14_bat REAL,
+                    ciclos_bat REAL,
+                    Temperatura REAL,
                     Voltage_Bus_DC_CF REAL,
                     Load_Current_CF REAL,
                     Capacity_CF INTEGER,
@@ -170,7 +173,7 @@ def inicializar_db():
                 cursor.execute('''
                 CREATE TABLE eventos_sistema (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    fecha_hora DATETIME,
                     alarma1 TEXT,
                     alarma2 TEXT,
                     alarma3 TEXT,
@@ -276,6 +279,7 @@ def insertar_datos():
     conn = None
     datos=[]
     alarmas=[]
+    fecha_hora = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
         conn = crear_conexion()
         if conn is None:
@@ -549,44 +553,46 @@ def insertar_datos():
     Voltage_cell_12_bat=round(datos[41],2)
     Voltage_cell_13_bat=round(datos[42],2)
     Voltage_cell_14_bat=round(datos[43],2)
+    ciclos_bat=round(datos[44])
+    Temperatura=round(datos[45],1)
     #Cuadro de Fuerza
-    Voltage_Bus_DC_CF=datos[44]
-    Load_Current_CF=datos[45]
-    Capacity_CF=int(round(datos[46]))
-    Output_Current_CF=datos[47]
-    Modo_CF=datos[48]
-    Temperature_CF=int(round(datos[49]))
-    StatusG01=datos[50]
-    Voltaje_Output_G01=datos[51]
-    Current_Output_G01=datos[52]
-    Voltage_AC_G01=datos[53]
-    Current_AC_G01=datos[54]
-    StatusG02=datos[55]
-    Voltaje_Output_G02=datos[56]
-    Current_Output_G02=datos[57]
-    Voltage_AC_G02=datos[58]
-    Current_AC_G02=datos[59]
-    StatusG188=datos[60]
-    Voltaje_Output_G188=datos[61]
-    Current_Output_G188=datos[62] 
-    Voltage_AC_G188=datos[63]
-    Current_AC_G188=datos[64]
+    Voltage_Bus_DC_CF=datos[46]
+    Load_Current_CF=datos[47]
+    Capacity_CF=int(round(datos[48]))
+    Output_Current_CF=datos[49]
+    Modo_CF=datos[50]
+    Temperature_CF=int(round(datos[51]))
+    StatusG01=datos[52]
+    Voltaje_Output_G01=datos[53]
+    Current_Output_G01=datos[54]
+    Voltage_AC_G01=datos[55]
+    Current_AC_G01=datos[56]
+    StatusG02=datos[57]
+    Voltaje_Output_G02=datos[58]
+    Current_Output_G02=datos[59]
+    Voltage_AC_G02=datos[60]
+    Current_AC_G02=datos[61]
+    StatusG188=datos[62]
+    Voltaje_Output_G188=datos[63]
+    Current_Output_G188=datos[64] 
+    Voltage_AC_G188=datos[65]
+    Current_AC_G188=datos[66]
     #Controlador Solar
-    Voltage_PV_solar=round(datos[65],1)
-    batery_voltage_solar=datos[66]
-    Charging_Current_solar=round(datos[67],2)
-    Output_Voltage_solar=datos[68]
-    Load_Current_solar=datos[69]
-    Charging_Power_solar=int(round(datos[70]))
-    Load_Power_solar=datos[71]
-    power_solar=datos[72]
-    power1_solar=datos[73]
+    Voltage_PV_solar=round(datos[67],1)
+    batery_voltage_solar=datos[68]
+    Charging_Current_solar=round(datos[69],2)
+    Output_Voltage_solar=datos[70]
+    Load_Current_solar=datos[71]
+    Charging_Power_solar=int(round(datos[72]))
+    Load_Power_solar=datos[73]
+    power_solar=datos[74]
+    power1_solar=datos[75]
     try:
         autonomia_total=round((48*100*(soc_bat/100))/(low_power_output_i1+low_power_output_i2-Charging_Power_solar),1)
         autonomia_bat=round((48*100*(soc_bat/100))/(low_power_output_i1+low_power_output_i2),1)
     except:
-        autonomia_total="infinite"
-        autonomia_bat="infinite"
+        autonomia_total="∞"
+        autonomia_bat="∞"
     power_red=(Voltage_AC_G01*Current_AC_G01)+(Voltaje_Output_G02*Current_Output_G02)+(Voltaje_Output_G188*Current_Output_G188)
     power_carga=low_power_output_i1+low_power_output_i2
     voltage_ac=(Voltage_AC_G01+Voltage_AC_G02+Voltage_AC_G188)/3
@@ -599,6 +605,7 @@ def insertar_datos():
     power_bat=Voltage_bat*Current_bat
 
     valores = (
+        fecha_hora,
         current_input_i1,
         high_power_output_i1,
         low_power_output_i1,
@@ -643,6 +650,8 @@ def insertar_datos():
         Voltage_cell_12_bat,
         Voltage_cell_13_bat,
         Voltage_cell_14_bat,
+        ciclos_bat,
+        Temperatura,
         Voltage_Bus_DC_CF,
         Load_Current_CF,
         Capacity_CF,
@@ -684,6 +693,7 @@ def insertar_datos():
         power_bat)
 
     columnas = '''
+    fecha_hora,
     current_input_i1,
     high_power_output_i1,
     low_power_output_i1,
@@ -728,6 +738,8 @@ def insertar_datos():
     Voltage_cell_12_bat,
     Voltage_cell_13_bat,
     Voltage_cell_14_bat,
+    ciclos_bat,
+    Temperatura,
     Voltage_Bus_DC_CF,
     Load_Current_CF,
     Capacity_CF,
@@ -768,9 +780,9 @@ def insertar_datos():
     current_inp_inv,
     power_bat
       '''
-    valores1=(alarma1,alarma2,alarma3,alarma4,alarma5,alarma6,alarma7,alarma8,alarma9,alarma10,alarma11,alarma12,alarma13,alarma14,alarma15,alarma16,alarma17,alarma18,alarma19,alarma20,alarma21,alarma22,alarma23,alarma24,alarma25,alarma26,alarma27,alarma28,alarma29,alarma30,alarma31,alarma32,alarma33,alarma34,alarma35,alarma36,alarma37,alarma38,alarma39,alarma40,alarma41,alarma42,alarma43,alarma44,alarma45,alarma46,alarma47,alarma48,alarma49,alarma50,alarma51,alarma52,alarma53,alarma54,alarma55,alarma56,alarma57,alarma58,alarma59,alarma60,alarma61,alarma62,alarma63,alarma64,alarma65,alarma66,alarma67,alarma68,alarma69,alarma70,alarma71,alarma72,alarma73,alarma74,alarma75,alarma76,alarma77,alarma78,alarma79,alarma80,alarma81,alarma82,alarma83,alarma84)
+    valores1=(fecha_hora, alarma1,alarma2,alarma3,alarma4,alarma5,alarma6,alarma7,alarma8,alarma9,alarma10,alarma11,alarma12,alarma13,alarma14,alarma15,alarma16,alarma17,alarma18,alarma19,alarma20,alarma21,alarma22,alarma23,alarma24,alarma25,alarma26,alarma27,alarma28,alarma29,alarma30,alarma31,alarma32,alarma33,alarma34,alarma35,alarma36,alarma37,alarma38,alarma39,alarma40,alarma41,alarma42,alarma43,alarma44,alarma45,alarma46,alarma47,alarma48,alarma49,alarma50,alarma51,alarma52,alarma53,alarma54,alarma55,alarma56,alarma57,alarma58,alarma59,alarma60,alarma61,alarma62,alarma63,alarma64,alarma65,alarma66,alarma67,alarma68,alarma69,alarma70,alarma71,alarma72,alarma73,alarma74,alarma75,alarma76,alarma77,alarma78,alarma79,alarma80,alarma81,alarma82,alarma83,alarma84)
 
-    columnas1="""alarma1,alarma2,alarma3,alarma4,alarma5,alarma6,alarma7,alarma8,alarma9,alarma10,alarma11,alarma12,alarma13,alarma14,alarma15,alarma16,alarma17,alarma18,alarma19,alarma20,alarma21,alarma22,alarma23,alarma24,alarma25,alarma26,alarma27,alarma28,alarma29,alarma30,alarma31,alarma32,alarma33,alarma34,alarma35,alarma36,alarma37,alarma38,alarma39,alarma40,alarma41,alarma42,alarma43,alarma44,alarma45,alarma46,alarma47,alarma48,alarma49,alarma50,alarma51,alarma52,alarma53,alarma54,alarma55,alarma56,alarma57,alarma58,alarma59,alarma60,alarma61,alarma62,alarma63,alarma64,alarma65,alarma66,alarma67,alarma68,alarma69,alarma70,alarma71,alarma72,alarma73,alarma74,alarma75,alarma76,alarma77,alarma78,alarma79,alarma80,alarma81,alarma82,alarma83,alarma84"""
+    columnas1="""fecha_hora, alarma1,alarma2,alarma3,alarma4,alarma5,alarma6,alarma7,alarma8,alarma9,alarma10,alarma11,alarma12,alarma13,alarma14,alarma15,alarma16,alarma17,alarma18,alarma19,alarma20,alarma21,alarma22,alarma23,alarma24,alarma25,alarma26,alarma27,alarma28,alarma29,alarma30,alarma31,alarma32,alarma33,alarma34,alarma35,alarma36,alarma37,alarma38,alarma39,alarma40,alarma41,alarma42,alarma43,alarma44,alarma45,alarma46,alarma47,alarma48,alarma49,alarma50,alarma51,alarma52,alarma53,alarma54,alarma55,alarma56,alarma57,alarma58,alarma59,alarma60,alarma61,alarma62,alarma63,alarma64,alarma65,alarma66,alarma67,alarma68,alarma69,alarma70,alarma71,alarma72,alarma73,alarma74,alarma75,alarma76,alarma77,alarma78,alarma79,alarma80,alarma81,alarma82,alarma83,alarma84"""
    
     try:
         # Verifica que existan las tablas antes de insertar
@@ -803,13 +815,13 @@ def insertar_datos():
         logger.critical(f"Error inesperado: {e}")
    
    
-   
-   
 
 if __name__ == '__main__':
-    setup_logging()  # Configura el sistema de logging
-    logger.info("Iniciando script de generación de datos aleatorios.")
-    inicializar_db()
+    setup_logging()
     while True:
-     insertar_datos()
-     time.sleep(10)
+        try:
+            insertar_datos()
+        except Exception as e:
+            logger.critical(f"Error inesperado en el ciclo principal: {e}", exc_info=True)
+        time.sleep(10)
+        
