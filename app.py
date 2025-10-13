@@ -1,10 +1,11 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_file
 from flask_caching import Cache
 from datetime import datetime, timedelta
 from collections import defaultdict
 import sqlite3
 import os
 import pandas as pd
+import io
 
 app = Flask(__name__)
 #DB_PATH = '/media/krillbox/HMI/HMI.db'
@@ -822,6 +823,58 @@ def api_alarmas_activas():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+from flask import send_file
+import io
+
+@app.route("/descargar_csv", methods=["GET"])
+def descargar_csv():
+    tipo = request.args.get('tipo')
+    date_start = request.args.get('date_start')
+    date_end = request.args.get('date_end')
+
+    if tipo in ["datos", "eventos"] and date_start and date_end:
+        fecha_inicio = f"{date_start} 00:00:00"
+        fecha_fin = f"{date_end} 23:59:59"
+
+    if tipo == "datos" and date_start and date_end:
+        query = """
+            SELECT * FROM datos WHERE fecha_hora BETWEEN ? AND ? ORDER BY fecha_hora ASC
+        """
+        conn = sqlite3.connect(DB_PATH)
+        df = pd.read_sql_query(query, conn, params=(fecha_inicio, fecha_fin))
+        conn.close()
+    elif tipo == "eventos" and date_start and date_end:
+        query = """
+            SELECT * FROM eventos_sistema WHERE fecha_hora BETWEEN ? AND ? ORDER BY fecha_hora ASC
+        """
+        conn = sqlite3.connect(DB_PATH)
+        df = pd.read_sql_query(query, conn, params=(fecha_inicio, fecha_fin))
+        conn.close()
+    elif tipo == "resumen_mensual":
+        query = """
+            SELECT * FROM resumen_mensual ORDER BY año DESC, mes DESC LIMIT 12
+        """
+        conn = sqlite3.connect(DB_PATH)
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+    else:
+        return "Tipo de datos o rango de fechas no válido", 400
+
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+
+    filename = f"{tipo}_datos.csv"
+    return send_file(
+    io.BytesIO(csv_buffer.getvalue().encode()),
+    mimetype='text/csv',
+    as_attachment=True,
+    attachment_filename=filename 
+)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
