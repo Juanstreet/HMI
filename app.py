@@ -8,8 +8,8 @@ import pandas as pd
 import io
 
 app = Flask(__name__)
-#DB_PATH = '/media/krillbox/HMI/HMI.db'
-DB_PATH = "/home/juan/Downloads/ProyectoIndustrial/HMI.db"
+DB_PATH = '/media/krillbox/HMI/HMI.db'
+#DB_PATH = "/home/juan/Downloads/ProyectoIndustrial/HMI.db"
 
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'SimpleCache'
@@ -77,6 +77,10 @@ def get_last_row():
                 "Voltage_cell_6_bat", "Voltage_cell_7_bat", "Voltage_cell_8_bat", "Voltage_cell_9_bat", "Voltage_cell_10_bat", "Voltage_cell_11_bat",
                 "Voltage_cell_12_bat", "Voltage_cell_13_bat", "Voltage_cell_14_bat"]
         row=dict(row)
+        power_apparent_carga=row.get("low_apparent_power_i1")+row.get("low_apparent_power_i2")
+        fp=round((row.get("power_carga")/power_apparent_carga),1)
+        row["power_apparent_carga"]=round(power_apparent_carga,1)
+        row["fp"]=fp
         for dato in row:
             if dato in celdas:
                 suma=suma+row[dato]
@@ -85,6 +89,7 @@ def get_last_row():
         row["voltage_output_i1"] = round(float(row["voltage_output_i1"]), 1) if row.get("voltage_output_i1") is not None else None
         if "power_red" in row and row["power_red"] is not None: 
             row["power_red"] = round(float(row["power_red"]), 1)
+        
         return row
     else:
         return {}
@@ -872,9 +877,9 @@ def descargar_csv():
     io.BytesIO(csv_buffer.getvalue().encode()),
     mimetype='text/csv',
     as_attachment=True,
-    attachment_filename=filename 
+    download_name=filename  
 )
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
