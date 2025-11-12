@@ -203,7 +203,7 @@
                    <div class="data-cards-label" style="text-align: center; align-items:center">SOLAR</div>
                    <div class="row">
                      <div class="d-flex justify-content-center align-items-center"><span class="text-principal-data Charging_Power_solar">{{registro.get('Charging_Power_solar',0)|int}}</span> &nbsp<span class="text-secondary">W</span></div>
-                     <div class="d-flex justify-content-center align-items-center"><span class="text-principal-data Voltage_PV_solar">{{registro.get('Voltage_PV_solar',0)|float}}</span> &nbsp<span class="text-secondary">V</span></div>
+                     <div class="d-flex justify-content-center align-items-center"><span class="text-principal-data Voltage_bat">{{registro.get('Voltage_bat',0)|float}}</span> &nbsp<span class="text-secondary">V</span></div>
                      <div class="d-flex justify-content-center align-items-center"><span class="text-principal-data Charging_Current_solar">{{registro.get('Charging_Current_solar',0)|float}}</span> &nbsp<span class="text-secondary">A</span></div>
                    </div>
                  </div>
@@ -297,13 +297,13 @@
                   <div class="data-cards h-100 w-100">
                     <div class="data-cards-label mb-2">Estatus Actual</div>
                     <div class="text-tertiary-data">Tensión</div>
-                      <span class="text-principal-data voltage_ac">{{ registro.get('voltage_ac', '') }}</span><span class="text-secondary">&nbspV</span>
+                      <span class="text-principal-data voltage_ac">{{ registro.get('voltage_ac') }}</span><span class="text-secondary">&nbspV</span>
                         
                       <div class="text-tertiary-data">Corriente</div>
-                      <span class="text-principal-data current_ac">{{ registro.get('voltage_ac', '') }} </span><span class="text-secondary">&nbspA</span>
+                      <span class="text-principal-data current_ac">{{ registro.get('voltage_ac') }} </span><span class="text-secondary">&nbspA</span>
 
                       <div class="text-tertiary-data">Potencia</div>
-                      <span class="text-principal-data power_red">{{ registro.get('power_red', '') }}</span><span class="text-secondary">&nbsp W</span>
+                      <span class="text-principal-data power_red">{{ registro.get('power_red') }}</span><span class="text-secondary">&nbsp W&nbsp&nbsp&nbsp</span>
                   </div>
                 </div>
                 <div class="col-12 col-md-8">
@@ -318,7 +318,7 @@
                  <div class="data-cards h-100 w-100">
                     <div class="data-cards-label">Potencia</div>
                     <div class="text-tertiary-data">Promedio Mensual</div>
-                    <span class="text-principal-data pot_prom_mensual_red">{{ datos_mes_actual.get('pot_prom_mensual_red') |round }}</span><span class="text-secondary">&nbsp W</span>
+                    <span class="text-principal-data pot_prom_mensual_red">{{ datos_mes_actual.get('pot_prom_mensual_red')}}</span><span class="text-secondary">&nbsp W</span>
                     <div class="text-tertiary-data">Máxima</div>
                     <span class="text-principal-data pot_max_mensual_red">{{ datos_mes_actual.get('pot_max_mensual_red', '') }}</span><span class="text-secondary">&nbsp W</span>
                   </div>
@@ -327,15 +327,6 @@
                   <div class="charts-card w-100 h-100">
                     <div class="data-cards-label mb-0">Potencia</div>
                     <canvas id="PowerRed"></canvas>
-                  </div>
-                </div>
-              </div> 
-
-              <div class="row gx-2 gy-3">
-                <div class="col-12 col-md-8">
-                  <div class="charts-card w-100 h-100">
-                    <div class="rede-label h5 mb-0">Frecuencia de la red VS Frecuencia de Salida</div>
-                    <canvas id="FrecuenciaRed"></canvas>
                   </div>
                 </div>
               </div> 
@@ -353,11 +344,11 @@
                     <div class="data-cards h-100 w-100">
                       <div class="data-cards-label">Condición Actual</div>
                       <div class="text-tertiary-data">Tensión</div>
-                      <span class="text-principal-data voltage_output_i1">{{ registro.get('voltage_output_i1') }}*1.732</span><span class="text-secondary">&nbsp V</span>
+                      <span class="text-principal-data voltage_output_i1">{{ registro.get('voltage_output_i1') }}</span><span class="text-secondary">&nbsp V</span>
                       <div class="text-tertiary-data">Corriente</div>
                       <span class="text-principal-data current_carga">{{ registro.get('current_carga') }}</span><span class="text-secondary">&nbsp A</span>
                       <div class="text-tertiary-data">Potencia</div>
-                      <span class="text-principal-data power_carga">{{ registro.get('power_carga')*3 }}*3</span><span class="text-secondary">&nbsp W</span>
+                      <span class="text-principal-data power_carga">{{ registro.get('power_carga')*3 }}*3</span><span class="text-secondary">&nbsp W  &nbsp&nbsp&nbsp</span><span class="text-principal-data power_apparent_carga">{{ registro.get('power_apparent_carga')}}</span><span class="text-secondary">&nbsp VA</span>
                     </div>
                   </div>
                   <div class="col-12 col-md-8">
@@ -378,6 +369,9 @@
                         <span class="text-principal-data pot_prom_mensual_carga">{{datos_mes_actual.get('pot_prom_mensual_carga')}}</span><span class="text-secondary">&nbsp W</span>
                         <div class="text-tertiary-data">Máxima</div>
                         <span class="text-principal-data pot_max_mensual_carga">{{datos_mes_actual.get('pot_max_mensual_carga')}}</span><span class="text-secondary">&nbsp W</span>
+                        <div class="text-tertiary-data">Factor de Potencia</div>
+                        <span class="text-principal-data fp">{{registro.get('fp')}}</span>
+                      
                       </div>
                     </div>
 
@@ -393,7 +387,6 @@
 <!-- Tab Solar -->
           <div class="tab-pane fade" id="solar" role="tabpanel" aria-labelledby="solar-tab">
             <div class="tab-container container-fluid py-3">
-
               <div class="col-12 mb-3 tab-title">
                 <span class="badge bg-danger fs-4 px-4 py-2 rounded-pill">Solar</span>
               </div>
@@ -418,19 +411,17 @@
                 </div>
 
               </div>
+
               <div class="row gx-2 gy-2">
                 <div class="col-12 col-md-4">
                   <div class="data-cards h-100 w-100">
                     <div class="data-cards-label">Aporte Instantáneo</div>
-                    <div class="d-flex align-items-center">
-                        <!-- <div class="circle-indicator me-3 Charging_Power_solar text-principal-data">{{100*(registro.get('power_carga'))/(1+registro.get('Charging_Power_solar'))|round}}</div> -->
-                        <div>
-                            <div class="text-tertiary-data">Potencia Solar</div>
-                            <div class="text-principal-data Charging_Power_solar">{{ registro.get('Charging_Power_solar')| round }}<span class="text-secondary">W</span></div>
-                            <div class="text-tertiary-data">Potencia Carga</div>
-                            <div class="text-principal-data power_carga">{{ registro.get('power_carga') }}<span class="text-secondary">W</span></div>
-                        </div>
-                    </div>
+                    <div class="text-tertiary-data">Potencia Solar</div>
+                    <span class="text-principal-data Charging_Power_solar">{{ registro.get('Charging_Power_solar')| round }}</span><span class="text-secondary">&nbsp W</span>
+                    <div class="text-tertiary-data">Potencia Carga</div>
+                    <span class="text-principal-data power_carga">{{ registro.get('power_carga') }}</span><span class="text-secondary">&nbsp W</span>
+
+                      
                   </div>
                 </div>
                 <div class="col-12 col-md-8">
@@ -439,14 +430,11 @@
                     <canvas id="VoltageCurrentMPPT"></canvas>
                   </div>
                 </div>
+
               </div>
+
               <div class="row gx-2 gy-2 mt-2">
-                <div class="col-12 col-md-6">
-                  <div class="charts-card h-100 w-100" style="max-height: 35vh !important;">
-                    <div class="data-cards-label h6 mb-1 text-warning">Curva Solar 2</div>
-                    <canvas id="curvaSolarChart2" class="mb-1" style="max-height: 30vh !important;"></canvas>
-                  </div>
-                </div>
+      
                 <div class="col-12 col-md-6">
                   <div class="charts-card mb-1 h-100 w-100" style="max-height: 35vh !important;">
                     <div class="data-cards-label h5 mb-0">Curva Solar</span></div>
@@ -463,6 +451,8 @@
                     <button id="zoom-in-carga"><p> + </p></button>
                     <button id="zoom-out-carga"><p> - </p></button>
                   </div>
+                </div>
+                <div class="col-12 col-md-6">
                 </div>
               </div>
 
@@ -498,7 +488,7 @@
             
                 <div class="col-md-6 col-sm-12 col-lg-3">
                   <div class="data-cards h-100 w-100">
-                    <div class="data-cards-label">Consumida</div>
+                    <div class="data-cards-label">Consumo</div>
                     <div class="text-tertiary-data">Año en curso</div>
                     <span class="text-principal-data energia_anual_carga">{{(datos_mensuales.get('energia_anual_carga')/1000 )| float| round(2)}}</span><span class="text-secondary">&nbsp kWh</span>
                     <div class="text-tertiary-data">Promedio Mensual</div>
@@ -526,7 +516,7 @@
                 </div>
                 <div class="col-md-6 col-sm-12 col-lg-3">
                   <div class="data-cards h-100 w-100">
-                    <div class="data-cards-label">Renovable</div>
+                    <div class="data-cards-label">Solar</div>
                     <div class="text-tertiary-data">Año en curso</div>
                     <span class="text-principal-data energia_anual_solar">{{(datos_mensuales.get('energia_anual_solar')/1000) | float|round(2)}}</span><span class="text-secondary">&nbsp kWh</span>
                     <div class="text-tertiary-data">Promedio Mensual</div>
@@ -538,6 +528,7 @@
 
             </div>
           </div>
+
         </div>
       </main>
     </div>
