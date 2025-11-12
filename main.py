@@ -3,11 +3,12 @@ from easysnmp import Session
 from pymodbus.client import ModbusTcpClient
 from register import faults_inverter,faults_solar,alarm_CF,register_inverter,register_solar_controler,battery_registers,CF_registers
 from alarms import *
-
+from app import energia_acumulada
+from collections import defaultdict
 
 # --- Variables globales ---
-#DB_PATH = '/media/krillbox/HMI/HMI.db'
-DB_PATH = "/home/juan/Downloads/HMI(2).db"
+DB_PATH = '/media/krillbox/HMI/HMI.db'
+#DB_PATH = "/home/juan/Downloads/HMI(2).db"
 logger = logging.getLogger(__name__)  # Logger para este módulo
 
 #Configuracion de la comunicacion con los equipos RTU
@@ -40,6 +41,72 @@ try:
 except:
     logger.error("No se pudo configurar la bateria")
 
+def Estadisticas_Mensuales(data):       
+    potencias = [r[1] for r in data]
+    energia = round(energia_acumulada(data),2)
+    pot_max_mensual = max(potencias) if potencias else 0
+    pot_prom_mensual = round(sum(potencias)/len(potencias), 2) if potencias else 0
+    return (pot_max_mensual, pot_prom_mensual, energia, potencias)
+
+def guardar_resumen_mensual(year, month):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Verifica si ya existe el resumen para ese mes
+    cursor.execute("SELECT COUNT(*) FROM resumen_mensual WHERE año=? AND mes=?", (year, month))
+    if cursor.fetchone()[0]:
+        conn.close()
+        print(f"Resumen mensual para {year}-{month:02d} ya existe.")
+        return
+
+    # Trae los datos crudos del mes
+    cursor.execute("""
+        SELECT fecha_hora,
+               COALESCE(power_carga, 0) AS power_carga,
+               COALESCE(Charging_Power_solar, 0) AS Charging_Power_solar,
+               COALESCE(power_red, 0) AS power_red,
+               COALESCE(power_bat, 0) AS power_bat
+        FROM datos
+        WHERE strftime('%Y', fecha_hora) = ? AND strftime('%m', fecha_hora) = ?
+        ORDER BY fecha_hora ASC
+    """, (str(year), f"{month:02d}"))
+    rows = cursor.fetchall()
+
+    datos_carga_mes = []
+    datos_solar_mes = []
+    datos_red_mes = []
+    datos_bat_mes = []
+
+    for item in rows:
+        dt_obj = datetime.datetime.strptime(item["fecha_hora"], '%Y-%m-%d %H:%M:%S')
+        datos_carga_mes.append((dt_obj, item["power_carga"] or 0))
+        datos_solar_mes.append((dt_obj, item["Charging_Power_solar"] or 0))
+        datos_red_mes.append((dt_obj, item["power_red"] or 0))
+        datos_bat_mes.append((dt_obj, item["power_bat"] or 0))
+
+    pot_max_mensual_carga, pot_prom_mensual_carga, energia_carga = Estadisticas_Mensuales(datos_carga_mes)
+    pot_max_mensual_solar, pot_prom_mensual_solar, energia_solar = Estadisticas_Mensuales(datos_solar_mes)
+    pot_max_mensual_red, pot_prom_mensual_red, energia_red = Estadisticas_Mensuales(datos_red_mes)
+    pot_max_mensual_bat, pot_prom_mensual_bat, energia_bat = Estadisticas_Mensuales(datos_bat_mes)
+
+    cursor.execute("""
+        INSERT INTO resumen_mensual (
+            año, mes,
+            energia_carga, energia_solar, energia_red, energia_bat,
+            pot_max_carga, pot_prom_carga, pot_max_solar, pot_prom_solar,
+            pot_max_red, pot_prom_red, pot_max_bat, pot_prom_bat
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        year, month,
+        energia_carga, energia_solar, energia_red, energia_bat,
+        pot_max_mensual_carga, pot_prom_mensual_carga, pot_max_mensual_solar, pot_prom_mensual_solar,
+        pot_max_mensual_red, pot_prom_mensual_red, pot_max_mensual_bat, pot_prom_mensual_bat
+    ))
+    conn.commit()
+    conn.close()
+    print(f"Resumen mensual guardado para {year}-{month:02d}.")
+
 
 def setup_logging():
     # Configuración básica
@@ -70,6 +137,42 @@ def crear_conexion():
     except sqlite3.Error as e:
         logger.error(f"Error al conectar a la base de datos: {e}", exc_info=True)
         return None
+
+
+def fetch_last_event(conn):
+    cursor = conn.cursor()
+    alarm_cols = [f"alarma{i}" for i in range(1, 85)]
+    cols = ", ".join(["id", "fecha_hora"] + alarm_cols)
+    cursor.execute(f"SELECT {cols} FROM eventos_sistema ORDER BY fecha_hora DESC, id DESC LIMIT 1")
+    row = cursor.fetchone()
+    if not row:
+        return None
+    columns = ["id", "fecha_hora"] + alarm_cols
+    return dict(zip(columns, row))
+
+
+def normalize_alarm_value(v):
+
+    if v is None:
+        return None
+    s = str(v).strip()
+    if s == "" or s.lower() == "none":
+        return None
+    return s
+
+
+def should_insert_event(conn, new_alarm_values):
+    last = fetch_last_event(conn)
+    if last is None:
+        return True  
+
+    for i in range(1, 85):
+        key = f"alarma{i}"
+        new_val = normalize_alarm_value(new_alarm_values.get(key))
+        last_val = normalize_alarm_value(last.get(key))
+        if new_val != last_val:
+            return True 
+    return False  
 
 
 def inicializar_db():
@@ -261,7 +364,35 @@ def inicializar_db():
                     alarma84 TEXT                        
                      ''
                 )''')
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='resumen_mensual'")
+            if not cursor.fetchone():
+                cursor.execute('''
+                CREATE TABLE resumen_mensual (
+                año INTEGER,
+                mes INTEGER,
+                energia_carga REAL,
+                energia_solar REAL,
+                energia_red REAL,
+                energia_bat REAL,
+                pot_max_carga REAL,
+                pot_prom_carga REAL,
+                pot_max_solar REAL,
+                pot_prom_solar REAL,
+                pot_max_red REAL,
+                pot_prom_red REAL,
+                pot_max_bat REAL,
+                pot_prom_bat REAL,
+                PRIMARY KEY (año, mes)
+            )
+                ''')
             conn.commit()
+            try:
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_eventos_fecha_hora ON eventos_sistema(fecha_hora)")
+                conn.commit()
+                logger.info("Índice idx_eventos_fecha_hora creado o ya existente.")
+            except sqlite3.Error as e:
+                logger.warning(f"No se pudo crear índice idx_eventos_fecha_hora: {e}")
+        
             logger.info("Tablas 'datos' y 'eventos_sistema' creadas exitosamente.")
     except sqlite3.Error as e:
         logger.error(f"Error al inicializar la base de datos: {e}", exc_info=True)
@@ -514,7 +645,7 @@ def insertar_datos():
     high_apparent_power_i1= round(datos[3],1)
     low_apparent_power_i1= round((datos[4]),1)
     voltage_input_i1= round(datos[5]*10,1)
-    voltage_output_i1= round(datos[6]*math.sqrt(3),1)
+    voltage_output_i1= round(datos[6],1)
     frecuency_output_i1=round(datos[7]*10,2)
     percentage_load_i1= round(datos[8])
     current_output_i1= round(datos[9],1)
@@ -527,7 +658,7 @@ def insertar_datos():
     high_apparent_power_i2= round(datos[15],1)
     low_apparent_power_i2= round(datos[16],1)
     voltage_input_i2= round(datos[17]*10,1)
-    voltage_output_i2= round(datos[18]*math.sqrt(3),1)
+    voltage_output_i2= round(datos[18],1)
     frecuency_output_i2= round(datos[19]*10,2)
     percentage_load_i2= round(datos[20])
     current_output_i2= round(datos[21],1)
@@ -562,22 +693,22 @@ def insertar_datos():
     Capacity_CF=round(datos[48])
     Output_Current_CF=round(datos[49],1)
     Modo_CF=datos[50]
-    Temperature_CF=int(round(datos[51]),1)
+    Temperature_CF=int(datos[51])
     StatusG01=datos[52]
-    Voltaje_Output_G01=round(datos[53],1)
-    Current_Output_G01=round(datos[54],1)
+    Voltaje_Output_G01=round((datos[53]/100),1)
+    Current_Output_G01=round((datos[54])/10,1)
     Voltage_AC_G01=round(datos[55],1)
-    Current_AC_G01=round(datos[56],1)
+    Current_AC_G01=round((datos[56]/10),1)
     StatusG02=datos[57]
-    Voltaje_Output_G02=round(datos[58],1)
-    Current_Output_G02=round(datos[59],1)
+    Voltaje_Output_G02=round((datos[58]/100),1)
+    Current_Output_G02=round((datos[59]/10),1)
     Voltage_AC_G02=round(datos[60],1)
-    Current_AC_G02=datos[61]
+    Current_AC_G02=round((datos[61]/10),1)
     StatusG188=datos[62]
-    Voltaje_Output_G188=round(datos[63],1)
-    Current_Output_G188=round(datos[64],1) 
+    Voltaje_Output_G188=round((datos[63]/100),1)
+    Current_Output_G188=round((datos[64]/10),1) 
     Voltage_AC_G188=round(datos[65],1)
-    Current_AC_G188=round(datos[66],1)
+    Current_AC_G188=round((datos[66]/10),1)
     #Controlador Solar
     Voltage_PV_solar=round(datos[67],1)
     batery_voltage_solar=round(datos[68],1)
@@ -588,21 +719,36 @@ def insertar_datos():
     Load_Power_solar=round(datos[73],1)
     power_solar=round(datos[74],1)
     power1_solar=round(datos[75],1)
+
+
     try:
         autonomia_total=round((48*100*(soc_bat/100))/(low_power_output_i1+low_power_output_i2-Charging_Power_solar),1)
         autonomia_bat=round((4800*(soh_bat/100)*(soc_bat/100))/(low_power_output_i1+low_power_output_i2),1)
     except:
         autonomia_total="∞"
         autonomia_bat="∞"
-    power_red=round((Voltage_AC_G01*Current_AC_G01)+(Voltaje_Output_G02*Current_Output_G02)+(Voltaje_Output_G188*Current_Output_G188))
-    power_carga=round(low_power_output_i1+low_power_output_i2)
-    voltage_ac=round((Voltage_AC_G01+Voltage_AC_G02+Voltage_AC_G188)/3,1)
-    current_carga=round(current_output_i2+current_output_i1,1)
-    current_ac=round(Current_AC_G01+Current_AC_G02+Current_AC_G188,1)
+
+    
+
+    power_red=round(((Current_Output_G01+Current_Output_G02+Current_Output_G188)*Voltaje_Output_G188)/0.9)
+
+    if power_red<0:
+        power_red=0
+
+    power_carga=round(low_power_output_i1+low_power_output_i2+120)
+    voltage_ac=round((Voltage_AC_G188),1)
+           
+    
+    current_carga=round((power_carga/voltage_output_i1),1)
+    try:
+        current_ac=round((power_red/Voltage_AC_G01),1)
+    except:
+        current_ac=0
+       
     if Current_bat>0:
         current_inp_inv=round(Charging_Current_solar+Current_Output_G01+Current_Output_G02+Current_AC_G188+Current_bat,1)
     else:
-        current_inp_inv=round(Charging_Current_solar+Current_Output_G01+Current_Output_G02+Current_AC_G188,1)
+        current_inp_inv=round(Charging_Current_solar+Current_Output_G01+Current_Output_G02+Current_Output_G188,1)
     power_bat=round(Voltage_bat*Current_bat,1)
 
     valores = (
@@ -787,7 +933,7 @@ def insertar_datos():
    
     try:
         # Verifica que existan las tablas antes de insertar
-        if not tabla_existe("datos") or not tabla_existe("eventos_sistema"):
+        if not tabla_existe("datos") or not tabla_existe("eventos_sistema") or not tabla_existe("resumen_mensual")  :
             logger.warning("Tablas no existentes, intentando inicializar la base de datos.")
             inicializar_db()
         with sqlite3.connect(DB_PATH, timeout=15) as conn:
@@ -799,12 +945,27 @@ def insertar_datos():
             cursor.execute(insert_sql, valores)
             logger.info(f"Datos insertados: {valores[:5]}...")  # Log parcial para evitar saturación
             
-            placeholders1 = ', '.join(['?'] * len(valores1))
-            insert_sql = f"INSERT INTO eventos_sistema ({columnas1}) VALUES ({placeholders1})"
-            cursor.execute(insert_sql, valores1)
-            conn.commit()
-            logger.info(f"Datos insertados: {valores[:5]}...")  # Log parcial para evitar saturación
-                       
+        
+            new_alarm_values = {f"alarma{i}": alarmas[i-1] for i in range(1, 85)}
+
+            try:
+                if should_insert_event(conn, new_alarm_values):
+
+                    placeholders1 = ', '.join(['?'] * len(valores1))
+                    insert_sql = f"INSERT INTO eventos_sistema ({columnas1}) VALUES ({placeholders1})"
+                    cursor.execute(insert_sql, valores1)
+                    conn.commit()
+                    logger.info("Evento inserción: nuevo estado detectado, se insertó nuevo registro en eventos_sistema.")
+                else:
+                   
+                    last = fetch_last_event(conn)
+                    if last:
+                        cursor.execute("UPDATE eventos_sistema SET fecha_hora = ? WHERE id = ?", (fecha_hora, last['id']))
+                        conn.commit()
+                        logger.debug("Evento repetido: actualizado fecha_hora del último registro en eventos_sistema.")
+            except Exception as e:
+                logger.error(f"Error al decidir insertar/actualizar evento: {e}", exc_info=True)
+
     except sqlite3.OperationalError as e:
         if "database is locked" in str(e):
             logger.warning("La base de datos está bloqueada, reintentando en el siguiente ciclo.")
@@ -819,10 +980,23 @@ def insertar_datos():
 
 if __name__ == '__main__':
     setup_logging()
+    ultimo_mes_guardado = datetime.datetime.now().month
     while True:
         try:
+            now = datetime.datetime.now()
+            # Si cambió el mes, guarda el resumen del mes anterior
+            if now.month != ultimo_mes_guardado:
+                # Calcula el mes y año anterior
+                if now.month == 1:
+                    prev_year = now.year - 1
+                    prev_month = 12
+                else:
+                    prev_year = now.year
+                    prev_month = now.month - 1
+                guardar_resumen_mensual(prev_year, prev_month)
+                ultimo_mes_guardado = now.month
+
             insertar_datos()
         except Exception as e:
             logger.critical(f"Error inesperado en el ciclo principal: {e}", exc_info=True)
-        time.sleep(10)
-        
+        time.sleep(5)
