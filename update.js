@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fechaInput = document.getElementById('fecha-curva');
     const btnGraficar = document.getElementById('btn-graficar');
     const ctxSolar = document.getElementById('curvaSolarChart').getContext('2d');
-    const ctxSolar2 = document.getElementById('curvaSolarChart2').getContext('2d');
+    // const ctxSolar2 = document.getElementById('curvaSolarChart2').getContext('2d');
     const ctxBarEnerRedSolar = document.getElementById('BarEnerRedSolar').getContext('2d');
     const ctxVoltageCurrent = document.getElementById('voltageCurrentChartSolar').getContext('2d');
     const ctxVoltageCurrentRed = document.getElementById('VoltageCurrentRed').getContext('2d');
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
 
-    const ctxFrecuenciaRed = document.getElementById('FrecuenciaRed').getContext('2d');
+    // const ctxFrecuenciaRed = document.getElementById('FrecuenciaRed').getContext('2d');
 
     
 
@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
             {id: "icon-red", valor: valores.current_ac },
             {id: "circle-red", valor:valores.current_ac},
             {id: "flecha-red", valor: valores.current_ac},
-            {id: "red-on",valor: valores.current_ac},
-            {id: "red-off",valor: valores.current_ac},
+            {id: "red-on",valor: valores.voltage_ac},
+            {id: "red-off",valor: valores.voltage_ac},
 
             { id: "icon-solar", valor: valores.Charging_Current_solar },
             {id: "circle-solar", valor: valores.Charging_Current_solar},
@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (v > 0){
                     el.classList.add("condition-off")
                 }
+
             }        
             
             else if (icono.id=='bat-dis'){
@@ -173,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Output_Voltage_solar", "Load_Current_solar", "Charging_Power_solar", "Load_Power_solar",
                 "power_solar", "power1_solar", "autonomia_total", "autonomia_bat", 
                 "power_red", "power_carga", "voltage_ac", "current_carga",
-                "current_ac","current_inp_inv", "power_bat","ciclos_bat"
+                "current_ac","current_inp_inv", "power_bat","ciclos_bat","power_apparent_carga","fp"
                 ];
                 campos.forEach(function(campo) {
                     // Busca TODOS los elementos con la clase igual al nombre del campo
@@ -328,82 +329,82 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
      // Gráfico de la curva solar2
-    const curvaChart2 = new Chart(ctxSolar2, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Potencia Solar',
-                data: [],
-                borderColor: '#00bfff',
-                backgroundColor: 'rgba(0,191,255,0.12)',
-                borderWidth: 2,
-                tension: 0.4,
-                yAxisID: 'solar-axis',
-                pointRadius: 0
-            },
-            {
-                label: 'Potencia de Carga',
-                data: [],
-                borderColor: '#39ff14',
-                backgroundColor: 'rgba(57,255,20,0.09)',
-                borderWidth: 2,
-                tension: 0.4,
-                yAxisID: 'carga-axis',
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        usePointStyle: true,   
-                        pointStyle: 'line',    
-                        boxWidth: 60,
-                        boxHeight: 30,
-                        color: "#fff"
-                    }
-                },
-                tooltip: { mode: 'index', intersect: false },
-                zoom: {
-                    pan: {
-                        enabled: true,
-                        mode: 'x', // Permite pan solo en el eje horizontal
-                    },
-                    zoom: {
-                        wheel: {
-                            enabled: true,
-                        },
-                        pinch: {
-                            enabled: true
-                        },
-                        mode: 'x', // Permite zoom solo en el eje horizontal
-                    }
-                }
-            },
-            scales: {
-                x: { 
-                    ticks: { color: "#fff" }, 
-                    grid: { color: "#32445A" } 
-                },
-                'solar-axis': {
-                    tbeginAtZero: true,
-                    title: { display: true, text: 'Potencia Solar (W)', color: "#00bfff" },
-                    ticks: { color: "#00bfff" },
-                    grid: { color: "#263142" }
-                },
-                'carga-axis': {
-                    beginAtZero: true,
-                    position: 'right',
-                    title: { display: true, text: 'Potencia de la Carga (W)', color: "#39ff14" },
-                    ticks: { color: "#39ff14" },
-                    grid: { drawOnChartArea: false }
-                }
-            }
-        }
-    });
+    // const curvaChart2 = new Chart(ctxSolar2, {
+    //     type: 'line',
+    //     data: {
+    //         labels: [],
+    //         datasets: [{
+    //             label: 'Potencia Solar',
+    //             data: [],
+    //             borderColor: '#00bfff',
+    //             backgroundColor: 'rgba(0,191,255,0.12)',
+    //             borderWidth: 2,
+    //             tension: 0.4,
+    //             yAxisID: 'solar-axis',
+    //             pointRadius: 0
+    //         },
+    //         {
+    //             label: 'Potencia de Carga',
+    //             data: [],
+    //             borderColor: '#39ff14',
+    //             backgroundColor: 'rgba(57,255,20,0.09)',
+    //             borderWidth: 2,
+    //             tension: 0.4,
+    //             yAxisID: 'carga-axis',
+    //             pointRadius: 0
+    //         }]
+    //     },
+    //     options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         plugins: {
+    //             legend: {
+    //                 labels: {
+    //                     usePointStyle: true,   
+    //                     pointStyle: 'line',    
+    //                     boxWidth: 60,
+    //                     boxHeight: 30,
+    //                     color: "#fff"
+    //                 }
+    //             },
+    //             tooltip: { mode: 'index', intersect: false },
+    //             zoom: {
+    //                 pan: {
+    //                     enabled: true,
+    //                     mode: 'x', // Permite pan solo en el eje horizontal
+    //                 },
+    //                 zoom: {
+    //                     wheel: {
+    //                         enabled: true,
+    //                     },
+    //                     pinch: {
+    //                         enabled: true
+    //                     },
+    //                     mode: 'x', // Permite zoom solo en el eje horizontal
+    //                 }
+    //             }
+    //         },
+    //         scales: {
+    //             x: { 
+    //                 ticks: { color: "#fff" }, 
+    //                 grid: { color: "#32445A" } 
+    //             },
+    //             'solar-axis': {
+    //                 tbeginAtZero: true,
+    //                 title: { display: true, text: 'Potencia Solar (W)', color: "#00bfff" },
+    //                 ticks: { color: "#00bfff" },
+    //                 grid: { color: "#263142" }
+    //             },
+    //             'carga-axis': {
+    //                 beginAtZero: true,
+    //                 position: 'right',
+    //                 title: { display: true, text: 'Potencia de la Carga (W)', color: "#39ff14" },
+    //                 ticks: { color: "#39ff14" },
+    //                 grid: { drawOnChartArea: false }
+    //             }
+    //         }
+    //     }
+    // });
 
 
     // Gráfico de variables solares 
@@ -841,95 +842,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    const FrecuenciaRed = new Chart(ctxFrecuenciaRed, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Frecuencia de la red (Hz)',
-                data: [],
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                yAxisID: 'voltage-axis',
-                tension: 0.4,
-                pointRadius: 0
-            },
-            {
-                label: 'Frecuencia de salida (Hz)',
-                data: [],
-                borderColor: "#39ff14",
-                borderWidth: 2,
-                yAxisID: 'current-axis',
-                tension: 0.4,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Hora'
-                    },
-                    ticks: { color: "#fff" }, 
-                    grid: { color: "#32445A"}
-                },
-                'voltage-axis': {
-                    type: 'linear',
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Frecuencia de la red (Hz)',
-                        color:"#00bfff"
-                    },
-                    beginAtZero: true,
-                    ticks: { color: "#00bfff" },
-                    grid: { color: "#263142" }
-                },
-                'current-axis': {
-                    type: 'linear',
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: 'Frecuencia de salida (Hz)',
-                        color: "#39ff14"
-                    },
-                    beginAtZero: true,
-                    ticks: { color: "#39ff14" },
-                    grid: { drawOnChartArea: false} 
-                }
-            },
-            plugins: {
-                legend: {
-                    labels: {
-                        usePointStyle: true,   
-                        pointStyle: 'line',    
-                        boxWidth: 60,
-                        boxHeight: 30,
-                        color: "#fff"
-                    }
-                },
-                zoom: {
-                    pan: {
-                        enabled: true,
-                        mode: 'x', // Permite pan solo en el eje horizontal
-                    },
-                    zoom: {
-                        wheel: {
-                            enabled: true,
-                        },
-                        pinch: {
-                            enabled: true
-                        },
-                        mode: 'x', // Permite zoom solo en el eje horizontal
-                    }
-                }
-            }
-        }
-    });
+    // const FrecuenciaRed = new Chart(ctxFrecuenciaRed, {
+    //     type: 'line',
+    //     data: {
+    //         labels: [],
+    //         datasets: [{
+    //             label: 'Frecuencia de la red (Hz)',
+    //             data: [],
+    //             borderColor: 'rgba(54, 162, 235, 1)',
+    //             borderWidth: 2,
+    //             yAxisID: 'voltage-axis',
+    //             tension: 0.4,
+    //             pointRadius: 0
+    //         },
+    //         {
+    //             label: 'Frecuencia de salida (Hz)',
+    //             data: [],
+    //             borderColor: "#39ff14",
+    //             borderWidth: 2,
+    //             yAxisID: 'current-axis',
+    //             tension: 0.4,
+    //             pointRadius: 0
+    //         }]
+    //     },
+    //     options: {
+    //         responsive: true,
+    //         maintainAspectRatio: false,
+    //         scales: {
+    //             x: {
+    //                 display: true,
+    //                 title: {
+    //                     display: true,
+    //                     text: 'Hora'
+    //                 },
+    //                 ticks: { color: "#fff" }, 
+    //                 grid: { color: "#32445A"}
+    //             },
+    //             'voltage-axis': {
+    //                 type: 'linear',
+    //                 position: 'left',
+    //                 title: {
+    //                     display: true,
+    //                     text: 'Frecuencia de la red (Hz)',
+    //                     color:"#00bfff"
+    //                 },
+    //                 beginAtZero: true,
+    //                 ticks: { color: "#00bfff" },
+    //                 grid: { color: "#263142" }
+    //             },
+    //             'current-axis': {
+    //                 type: 'linear',
+    //                 position: 'right',
+    //                 title: {
+    //                     display: true,
+    //                     text: 'Frecuencia de salida (Hz)',
+    //                     color: "#39ff14"
+    //                 },
+    //                 beginAtZero: true,
+    //                 ticks: { color: "#39ff14" },
+    //                 grid: { drawOnChartArea: false} 
+    //             }
+    //         },
+    //         plugins: {
+    //             legend: {
+    //                 labels: {
+    //                     usePointStyle: true,   
+    //                     pointStyle: 'line',    
+    //                     boxWidth: 60,
+    //                     boxHeight: 30,
+    //                     color: "#fff"
+    //                 }
+    //             },
+    //             zoom: {
+    //                 pan: {
+    //                     enabled: true,
+    //                     mode: 'x', // Permite pan solo en el eje horizontal
+    //                 },
+    //                 zoom: {
+    //                     wheel: {
+    //                         enabled: true,
+    //                     },
+    //                     pinch: {
+    //                         enabled: true
+    //                     },
+    //                     mode: 'x', // Permite zoom solo en el eje horizontal
+    //                 }
+    //             }
+    //         }
+    //     }
+    // });
 
     const VoltageCurrentMPPT = new Chart(ctxVoltageCurrentMPPT, {
         type: 'line',
@@ -1375,10 +1376,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     curvaChart.data.datasets[1].data = data.carga;
                     curvaChart.update("none");
                     //Curva solar 2
-                    curvaChart2.data.labels = data.labels;
-                    curvaChart2.data.datasets[0].data = data.solar2;
-                    curvaChart2.data.datasets[1].data = data.carga;
-                    curvaChart2.update("none");
+                    // curvaChart2.data.labels = data.labels;
+                    // curvaChart2.data.datasets[0].data = data.solar2;
+                    // curvaChart2.data.datasets[1].data = data.carga;
+                    // curvaChart2.update("none");
                 })
                 .catch(error => console.error('Error al obtener datos de la curva solar:', error));
         }
@@ -1428,10 +1429,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 VoltageCurrentMPPT.data.datasets[0].data = data.Charging_Current_solar.slice();
                 VoltageCurrentMPPT.update("none");
                 // Frecuencia de la red
-                FrecuenciaRed.data.labels = data.labels.slice();
-                FrecuenciaRed.data.datasets[0].data = data.voltage_output_i2.slice();
-                FrecuenciaRed.data.datasets[1].data = data.current_carga.slice();
-                FrecuenciaRed.update("none");
+                // FrecuenciaRed.data.labels = data.labels.slice();
+                // FrecuenciaRed.data.datasets[0].data = data.voltage_output_i2.slice();
+                // FrecuenciaRed.data.datasets[1].data = data.current_carga.slice();
+                // FrecuenciaRed.update("none");
                
             })
             .catch(error => console.error('Error al obtener datos /datos_graficar:', error));
@@ -1519,8 +1520,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setInterval(graficardatos_graficar, 10000);
     setInterval(graficarestadisticas_diarias,60000);
-    setInterval(actualizarDatos,10000);
-    setInterval(actualizarDatosMensuales, 60000);
+    setInterval(actualizarDatos,5000);
+    setInterval(actualizarDatosMensuales, 10000);
     setInterval(actualizarDatosDiarios, 60000);
     setInterval(graficarestadisticas_mensuales,100000);
 });
