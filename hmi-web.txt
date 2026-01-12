@@ -1,0 +1,27 @@
+[Unit]
+Description=HMI flask app (user service)
+#Se asegura de estar conectado a internet antes de iniciar
+After=network-online.target
+
+[Service]
+#Le dice a systemd que el comando principal (ExecStart) es el proceso que permanecerá en ejecución
+Type=simple
+
+##Usuario bajo el cual se ejecuta el servicio(El usuario debe existir y tener permisos)
+User=krillbox
+
+#Directorio donde se ejecuta el script
+WorkingDirectory=/home/krillbox/HMI
+
+#Comando que se ejecutará
+ExecStart=/home/krillbox/HMI/hml_venv/bin/python /home/krillbox/HMI/app.py
+
+#Reinicia el servicio si se detiene por cualquier razón
+Restart=always
+
+RestartSec=5 #Tiempo de espera
+
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

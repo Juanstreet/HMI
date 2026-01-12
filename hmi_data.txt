@@ -1,0 +1,29 @@
+[Unit]
+Description=Servicio de Recolección de Datos 
+
+#Asegura que la red esté disponible antes de iniciar tu servicio
+After=network.target
+
+[Service]
+#Le dice a systemd que el comando principal (ExecStart) es el proceso que permanecerá en ejecución
+Type=simple
+
+#Usuario bajo el cual se ejecuta el servicio(El usuario debe existir y tener permisos)
+User=krillbox
+
+#Directorio de Trabajo
+WorkingDirectory=/media/krillbox/HMI
+
+
+#Variables de entorno del servicio
+Environment=PATH=/media/krillbox/HMI/hmi_env/bin
+
+#Comando principal que inicia el servicio
+ExecStart=/media/krillbox/HMI/hmi_env/bin/python3 /media/krillbox/HMI/main.py
+
+#Reinicia el servicio si se detiene por cualquier razón
+Restart=always
+RestartSec=5 #Tiempo de espera
+
+[Install]
+WantedBy=multi-user.target
