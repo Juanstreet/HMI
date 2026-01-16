@@ -755,8 +755,10 @@ def insertar_datos():
     power_carga=round(low_power_output_i1+low_power_output_i2+120)
     voltage_ac=round((Voltage_AC_G188),1)
            
-    
-    current_carga=round((power_carga/voltage_output_i1),1)
+    try:
+        current_carga=round((power_carga/voltage_output_i1),1)
+    except:
+        current_carga=0
     try:
         current_ac=round((power_red/Voltage_AC_G01),1)
     except:
